@@ -115,44 +115,57 @@ class Sudoku:
         self.change_list(lista_copy)
         return Sudoku(lista)
 
-        # Łączenie 2 sudoku w jedno
-        def create_children(self, sud_x, sud_y):
-            new_sud = copy.deepcopy(self.lista)
-            # może być coś zle z tymi zerowym elementem bo w tam gdzie wywołuje mówie że chce zerowy
-            sud_male = sud_x[0]
-            sud_female = sud_y[0]
-            for row_children in range(10):
-                for column_children in range(10):
-                    if new_sud[row_children][column_children] == 0:
-                        random_gender = random.randint(1, 2)
-                        if random_gender == 1:
-                            new_sud[row_children][column_children] = sud_male[row_children][column_children]
-                        else:
-                            new_sud[row_children][column_children] = sud_female[row_children][column_children]
-            return new_sud
+    # Zwraca listę
+    def return_list(self):
+        return self.lista
+
+    # Łączenie 2 sudoku w jedno
+    def create_children(self, sud_x, sud_y):
+        new_sud = copy.deepcopy(self.lista)
+        # może być coś zle z tymi zerowym elementem bo w tam gdzie wywołuje mówie że chce zerowy
+        # główny bład jest taki że musimy to sudoku zamienić na listę
+        sud_male = sud_x.return_list()
+        sud_female = sud_y.return_list()
+        # czy w range(9) nie powinna być 10?
+        for row_children in range(9):
+            for column_children in range(9):
+                if new_sud[row_children][column_children] == 0:
+                    random_gender = random.randint(1, 2)
+                    if random_gender == 1:
+                        new_sud[row_children][column_children] = sud_male[row_children][column_children]
+                    else:
+                        new_sud[row_children][column_children] = sud_female[row_children][column_children]
+        #do poprawy nazwa
+        sudoczku = Sudoku()
+        sudoczku.change_list(new_sud)
+        return sudoczku
 
 
 # Generowanie 300 sudoku, pierwszej generacji, i wybranie 30 najlepszych
 def the_best_first_population(scope=30):
     the_best_sudoku = [(0, 40)]
     for _ in range(300):
-        sud2 = sud1.random_insert_digit()
-        length_empty_places = len(sud2.empty_places())
+        sud_from_first_generation = sud1.random_insert_digit()
+        length_empty_places = len(sud_from_first_generation.empty_places())
         for sud, number_empty_places in the_best_sudoku:
             if length_empty_places < number_empty_places:
-                the_best_sudoku.insert(the_best_sudoku.index((sud, number_empty_places)), (sud2, length_empty_places))
+                the_best_sudoku.insert(the_best_sudoku.index((sud, number_empty_places)), (sud_from_first_generation, length_empty_places))
                 if len(the_best_sudoku) > scope:
                     the_best_sudoku.remove(the_best_sudoku[scope])
                 break
     return the_best_sudoku
 
+
 # Tworzenie kolejnej generacji
-def create_next_generation(first_sud, previous_generation=[], scope_next_generation=30):
+# Zaprojektowałem tą funkcje i metode create chilren i coś nie działało miałem przerwe 3 dni od programowania
+# wróciłem i w 1h problem po problemie rozwiązana zagadka, czasami trzeba świeżej głowy, przeczytania kodu od nowa.
+# Ale zamysł był od początku dobry
+def create_next_generation(first_sud, the_best_previous_generation=[], scope_next_generation=30):
     the_best_sudoku = [(0, 40)]
     for _ in range(300):
         random_sudx = random.randint(0, scope_next_generation - 1)
         random_sudy = random.randint(0, scope_next_generation - 1)
-        new_sud = first_sud.create_children(previous_generation[random_sudx][0], previous_generation[random_sudy][0])
+        new_sud = first_sud.create_children(the_best_previous_generation[random_sudx][0], the_best_previous_generation[random_sudy][0])
         length_empty_places = len(new_sud.empty_places())
         for sud, number_empty_places in the_best_sudoku:
             if length_empty_places < number_empty_places:
@@ -161,7 +174,6 @@ def create_next_generation(first_sud, previous_generation=[], scope_next_generat
                     the_best_sudoku.remove(the_best_sudoku[scope_next_generation])
                 break
     return the_best_sudoku
-
 
 
 # Przekonałem się że system kontroli wersji jest potrzebny, skasował przez przypadek kawałek i napisałem źle, nie
@@ -177,14 +189,14 @@ sud1.change_list([[0, 0, 0, 5, 0, 0, 0, 0, 0],
                   [0, 0, 0, 0, 0, 0, 0, 6, 0],
                   [0, 0, 0, 0, 0, 0, 0, 0, 1]])
 lista_zwracana = the_best_first_population()
-for i in range(30):
-    sud3 = lista_zwracana[i][0]
+for i in range(10):
+    sud2 = lista_zwracana[i][0]
     print(lista_zwracana[i][1])
-    sud3.write_numbers_in_sudoku()
+    sud2.write_numbers_in_sudoku()
     print("\n \n")
 lista_zwracana2 = create_next_generation(sud1, lista_zwracana)
-for i in range(30):
-    sud4 = lista_zwracana2[i][0]
+for i in range(10):
+    sud2 = lista_zwracana2[i][0]
     print(lista_zwracana2[i][1])
-    sud4.write_numbers_in_sudoku()
+    sud2.write_numbers_in_sudoku()
     print("\n \n")
