@@ -188,6 +188,9 @@ def create_next_generation(first_sud, the_best_previous_generation, scope_next_g
     for _ in range(300):
         random_sudx = random.randint(0, scope_next_generation - 1)
         random_sudy = random.randint(0, scope_next_generation - 1)
+        while random_sudx == random_sudy:
+            random_sudx = random.randint(0, scope_next_generation - 1)
+            random_sudy = random.randint(0, scope_next_generation - 1)
         new_sud = first_sud.create_children(copy.deepcopy(the_best_previous_generation[random_sudx][0]),
                                             copy.deepcopy(the_best_previous_generation[random_sudy][0]))
         length_empty_places = len(new_sud.empty_places())
