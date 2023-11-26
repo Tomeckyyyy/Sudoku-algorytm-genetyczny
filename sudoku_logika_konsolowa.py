@@ -71,14 +71,6 @@ class Sudoku:
         else:
             return False
 
-    # Sprawdza, czy całe sudoku jest uzupełnione
-    def check_sudoku_empty(self):
-        for row in self.lista:
-            for i_check in row:
-                if i_check == 0:
-                    return False
-        return True
-
     # Szukanie pustych miejsc i dodawanie ich koordynatów do listy, metoda zwraca listę
     def empty_places(self):
         list_empty_places = []
@@ -119,54 +111,54 @@ class Sudoku:
     def return_list(self):
         return self.lista
 
-    # Łączenie 2 sudoku w jedno
-    # zmiana zmiennej mutacja wylosowana
-    # sprawdzanie, czy takie sudoku może istnieć po losowaniu
-    def create_children(self, sud_x, sud_y, mutation_rate=1):
-        copy_first_sud = copy.deepcopy(self.lista)
-        new_sud = self.lista
-        sud_male = sud_x.return_list()
-        sud_female = sud_y.return_list()
-        for row_children in range(9):
-            for column_children in range(9):
-                if new_sud[row_children][column_children] == 0:
-                    mutation = random.randint(mutation_rate, 100)
-                    if mutation == 1:
-                        list_possible_mutation = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-                        for iterator_mutation in range(9):
-                            mutation_add_digit = random.randint(0, len(list_possible_mutation) - 1)
-                            new_sud[row_children][column_children] = list_possible_mutation[mutation_add_digit]
-                            if not self.check_sudoku():
-                                new_sud[row_children][column_children] = 0
-                                list_possible_mutation.remove(list_possible_mutation[mutation_add_digit])
-                    else:
-                        list_possible_rand_gender = [1, 2]
-                        for iterator_random_gender in range(2):
-                            random_gender = random.randint(0, len(list_possible_rand_gender) - 1)
-                            if list_possible_rand_gender[random_gender] == 1:
-                                if sud_male[row_children][column_children] != 0:
-                                    new_sud[row_children][column_children] = sud_male[row_children][column_children]
-                                    if not self.check_sudoku():
-                                        new_sud[row_children][column_children] = 0
-                                        list_possible_rand_gender.remove(list_possible_rand_gender[random_gender])
-                                else:
-                                    list_possible_rand_gender.remove(list_possible_rand_gender[random_gender])
-                            else:
-                                if sud_female[row_children][column_children] != 0:
-                                    new_sud[row_children][column_children] = sud_female[row_children][column_children]
-                                    if not self.check_sudoku():
-                                        new_sud[row_children][column_children] = 0
-                                        list_possible_rand_gender.remove(list_possible_rand_gender[random_gender])
-                                else:
-                                    list_possible_rand_gender.remove(list_possible_rand_gender[random_gender])
-        self.change_list(copy_first_sud)
-        return Sudoku(new_sud)
+    # Tworzy mutacje
+    def mutation(self, x_children_mutation, y_children_mutation):
+        list_possible_mutation = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        for iterator_mutation in range(9):
+            mutation_add_digit = random.randint(0, len(list_possible_mutation) - 1)
+            self.lista[x_children_mutation][y_children_mutation] = list_possible_mutation[mutation_add_digit]
+            if not self.check_sudoku():
+                self.lista[x_children_mutation][y_children_mutation] = 0
+                list_possible_mutation.remove(list_possible_mutation[mutation_add_digit])
+
+    def change_digit_in_pos(self, posx, posy, digit):
+        self.lista[posx][posy] = digit
+
+
+# Łączenie 2 sudoku w jedno
+# zmiana zmiennej mutacja wylosowana
+# sprawdzanie, czy takie sudoku może istnieć po losowaniu
+# Zasada, że jak jest za duż wcięć, to coś musi być nie tak zadziałała
+def create_children(sud_x, sud_y, sud_to_complete, mutation_rate=1):
+    new_sud = sud_to_complete
+    sud_male = sud_x.return_list()
+    sud_female = sud_y.return_list()
+    coordinates_empty_places = sud_to_complete.empty_places()
+    for _ in range(len(coordinates_empty_places) - 1):
+        random_position_empty = random.randint(0, len(coordinates_empty_places)-1)
+        one_position_empty = coordinates_empty_places[random_position_empty]
+        mutation = random.randint(mutation_rate, 100)
+        if mutation == 1:
+            new_sud.mutation(one_position_empty[0], one_position_empty[1])
+        else:
+            random_gender = random.randint(0, 1)
+            if random_gender == 1:
+                digit = sud_male[one_position_empty[0]][one_position_empty[1]]
+                new_sud.change_digit_in_pos(one_position_empty[0], one_position_empty[1], digit)
+                if not new_sud.check_sudoku():
+                    new_sud.change_digit_in_pos(one_position_empty[0], one_position_empty[1], 0)
+            else:
+                digit = sud_female[one_position_empty[0]][one_position_empty[1]]
+                new_sud.change_digit_in_pos(one_position_empty[0], one_position_empty[1], digit)
+                if not new_sud.check_sudoku():
+                    new_sud.change_digit_in_pos(one_position_empty[0], one_position_empty[1], 0)
+    return new_sud
 
 
 # Generowanie 300 sudoku, pierwszej generacji, i wybranie 30 najlepszych
 def the_best_first_population(sud_to_solve, scope=30):
     the_best_sudoku = [(0, 40)]
-    for _ in range(300):
+    for _ in range(600):
         sud_from_first_generation = sud_to_solve.random_insert_digit()
         length_empty_places = len(sud_from_first_generation.empty_places())
         for sud, number_empty_places in the_best_sudoku:
@@ -188,11 +180,8 @@ def create_next_generation(first_sud, the_best_previous_generation, scope_next_g
     for _ in range(300):
         random_sudx = random.randint(0, scope_next_generation - 1)
         random_sudy = random.randint(0, scope_next_generation - 1)
-        while random_sudx == random_sudy:
-            random_sudx = random.randint(0, scope_next_generation - 1)
-            random_sudy = random.randint(0, scope_next_generation - 1)
-        new_sud = first_sud.create_children(copy.deepcopy(the_best_previous_generation[random_sudx][0]),
-                                            copy.deepcopy(the_best_previous_generation[random_sudy][0]))
+        new_sud = create_children(copy.deepcopy(the_best_previous_generation[random_sudx][0]),
+                                            copy.deepcopy(the_best_previous_generation[random_sudy][0]), first_sud)
         length_empty_places = len(new_sud.empty_places())
         for sud, number_empty_places in the_best_sudoku:
             if length_empty_places < number_empty_places:
@@ -217,33 +206,39 @@ sud1.change_list([[6, 1, 4, 0, 0, 0, 0, 0, 0],
                   [0, 0, 0, 0, 0, 0, 0, 0, 6],
                   [0, 9, 0, 0, 0, 0, 0, 0, 0]])
 
+# Sprawdzanie poprawności create children
+# sud2 = sud1.random_insert_digit()
+# sud3 = sud1.random_insert_digit()
+# sud_final = create_children(sud2, sud3, sud1)
+# print(sud2.empty_places())
+# sud2.write_numbers_in_sudoku()
+# print("\n")
+# print(sud3.empty_places())
+# sud3.write_numbers_in_sudoku()
+# print("\n")
+# print(sud_final.empty_places())
+# sud_final.write_numbers_in_sudoku()
+
+
 # Tworzenie jakichś tam populacji
 lista_zwracana0 = the_best_first_population(sud1)
 
 
 def kolejne_generacje(lista):
     koniec = 1
-    lista_zwracana = copy.deepcopy(lista)
     for p in range(30):
         for i in range(5):
-            sud2 = lista_zwracana[i][0]
-            print(lista_zwracana[i][1])
+            sud2 = lista[i][0]
+            print(lista[i][1])
             sud2.write_numbers_in_sudoku()
             print("\n \n")
-            if lista_zwracana[i][1] == 0:
+            if lista[i][0] == 0:
                 koniec = 0
         print("##################################################")
-        lista_zwracana1 = copy.deepcopy(lista_zwracana)
+        lista_zwracana1 = copy.deepcopy(lista)
         lista_zwracana = copy.deepcopy(create_next_generation(sud1, lista_zwracana1))
         if koniec == 0:
             break
 
 
 kolejne_generacje(lista_zwracana0)
-# for i in range(5):
-#     sud2 = lista_zwracana2[i][0]
-#     print(lista_zwracana2[i][1])
-#     sud2.write_numbers_in_sudoku()
-#     print("\n \n")
-# print("##################################################")
-
