@@ -1,5 +1,7 @@
 import random
 import copy
+import matplotlib.pyplot as plt
+
 
 
 class Sudoku:
@@ -96,22 +98,23 @@ class Sudoku:
         for i_random_insert in range(length_empty_places):
             random_int = random.randint(0, length_empty_places - 1)
             coordinates = lista_empty_places[random_int]
-            # list_possible_insert = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-            # for insert in range(9):
-            #     mutation_add_digit = random.randint(0, len(list_possible_insert) - 1)
-            #     lista[coordinates[0]][coordinates[1]] = list_possible_insert[mutation_add_digit]
-            #     if self.check_sudoku():
-            #         break
-            #     else:
-            #         lista[coordinates[0]][coordinates[1]] = 0
-            #         list_possible_insert.remove(list_possible_insert[mutation_add_digit])
-            # //////////////////////////////////////////
-            for insert in range(1, 10):
-                lista[coordinates[0]][coordinates[1]] = insert
+            # /////////////////////////////////////////////////////////////
+            list_possible_insert = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+            for insert in range(9):
+                mutation_add_digit = random.randint(0, len(list_possible_insert) - 1)
+                lista[coordinates[0]][coordinates[1]] = list_possible_insert[mutation_add_digit]
                 if self.check_sudoku():
                     break
                 else:
                     lista[coordinates[0]][coordinates[1]] = 0
+                    list_possible_insert.remove(list_possible_insert[mutation_add_digit])
+            # //////////////////////////////////////////
+            # for insert in range(1, 10):
+            #     lista[coordinates[0]][coordinates[1]] = insert
+            #     if self.check_sudoku():
+            #         break
+            #     else:
+            #         lista[coordinates[0]][coordinates[1]] = 0
             # //////////////////////////////////////////////
             lista_empty_places.remove(coordinates)
             length_empty_places = len(lista_empty_places)
@@ -142,29 +145,28 @@ class Sudoku:
 # zmiana zmiennej mutacja wylosowana
 # sprawdzanie, czy takie sudoku może istnieć po losowaniu
 # Zasada, że jak jest za duż wcięć, to coś musi być nie tak zadziałała
-def create_children(sud_x, sud_y, sud_to_complete, mutation_rate=3):
+def create_children(sud_x, sud_y, sud_to_complete, mutation_rate=6):
     new_sud = copy.deepcopy(sud_to_complete)
     sud_male = sud_x.return_list()
     sud_female = sud_y.return_list()
     coordinates_empty_places = copy.deepcopy(sud_to_complete.empty_places())
     for _ in range(len(coordinates_empty_places) - 1):
-        random_position_empty = random.randint(0, len(coordinates_empty_places) - 1)
+        random_position_empty = random.randint(0, len(coordinates_empty_places)-1)
         one_position_empty = coordinates_empty_places[random_position_empty]
         mutation = random.randint(mutation_rate, 100)
         if mutation == mutation_rate:
             new_sud.mutation(one_position_empty[0], one_position_empty[1])
         else:
-            # Tu się zaczyna to coś, co napisałem
+    # Tu sie zaczyna to coś co napisałem
             list_possible_rand_gender = [1, 2]
-            if sud_male[one_position_empty[0]][one_position_empty[1]] == 0 and sud_female[one_position_empty[0]][
-                one_position_empty[1]] == 0:
+            if sud_male[one_position_empty[0]][one_position_empty[1]] == 0 and sud_female[one_position_empty[0]][one_position_empty[1]] == 0:
                 new_sud.mutation(one_position_empty[0], one_position_empty[1])
             else:
                 if sud_male[one_position_empty[0]][one_position_empty[1]] == 0:
                     list_possible_rand_gender.remove(1)
                 elif sud_female[one_position_empty[0]][one_position_empty[1]] == 0:
                     list_possible_rand_gender.remove(2)
-                # tu się kończy
+    # tu się kończy
                 random_gender = random.choice(list_possible_rand_gender)
                 if random_gender == 1:
                     digit = sud_male[one_position_empty[0]][one_position_empty[1]]
@@ -203,14 +205,12 @@ def the_best_first_population(sud_to_solve, scope=30):
 def create_next_generation(first_sud, the_best_previous_generation, scope_next_generation=30):
     the_best_sudoku = [(0, 40)]
     for _ in range(300):
-        random_sudx = random.randint(0, scope_next_generation - 1)
-        random_sudy = random.randint(0, scope_next_generation - 1)
-        while random_sudx == random_sudy:
-            random_sudx = random.randint(0, scope_next_generation - 1)
-            random_sudy = random.randint(0, scope_next_generation - 1)
+        tab_random_sud = random.sample(range(0,scope_next_generation), 2)
+        random_sudx = tab_random_sud[0]
+        random_sudy = tab_random_sud[1]
         # wczesniej te 2 pierwsze argumenty były w deepcopy
         new_sud = create_children(copy.deepcopy(the_best_previous_generation[random_sudx][0]),
-                                  copy.deepcopy(the_best_previous_generation[random_sudy][0]), copy.deepcopy(first_sud))
+                                            copy.deepcopy(the_best_previous_generation[random_sudy][0]), copy.deepcopy(first_sud))
         length_empty_places = len(new_sud.empty_places())
         for sud, number_empty_places in the_best_sudoku:
             if length_empty_places < number_empty_places:
@@ -251,17 +251,33 @@ sud1.change_list([[6, 1, 4, 0, 0, 0, 0, 0, 0],
 
 # Tworzenie jakichś tam populacji
 lista_zwracana0 = the_best_first_population(sud1)
+lista_wykres_y_0 = []
+lista_wykres_y_1 = []
+lista_wykres_y_2 = []
+lista_wykres_y_3 = []
+lista_wykres_y_4 = []
+
 
 
 def kolejne_generacje(lista):
     koniec = 1
-    for p in range(50):
+    for p in range(20):
         for i in range(5):
+            if i == 0:
+                lista_wykres_y_0.append(lista[i][1])
+            elif i == 1:
+                lista_wykres_y_1.append(lista[i][1])
+            elif i == 2:
+                lista_wykres_y_2.append(lista[i][1])
+            elif i == 3:
+                lista_wykres_y_3.append(lista[i][1])
+            elif i == 4:
+                lista_wykres_y_4.append(lista[i][1])
             sud2 = lista[i][0]
             print(lista[i][1])
             sud2.write_numbers_in_sudoku()
             print("\n \n")
-            if lista[i][0] == 0:
+            if lista[i][1] == 0:
                 koniec = 0
         print("##################################################")
         lista_zwracana1 = copy.deepcopy(lista)
@@ -269,8 +285,11 @@ def kolejne_generacje(lista):
         if koniec == 0:
             break
 
-
 kolejne_generacje(lista_zwracana0)
+
+lista_x = [a for a in range(1, 21)]
+plt.plot(lista_x,lista_wykres_y_0, 'r', lista_x,lista_wykres_y_1, 'b', lista_x,lista_wykres_y_2, 'g', lista_x,lista_wykres_y_3, 'b--',lista_x,lista_wykres_y_4, 'r--')
+plt.show()
 
 # TODO: Co dlaczego ciągle zbiega się do jednego takiego samego sudoku
 # TODO: Mutacje, wyrzucić do nowej funkcji
@@ -280,3 +299,4 @@ kolejne_generacje(lista_zwracana0)
 # TODO: Najprawdopodobniej chodzi o to, że dziecko jest tworzone po kolei.
 # TODO: Nie może byc ze ta sama osoba, robi sama ze sobą dziecko
 # TODO: Mutacja może wstawić coś co można wstawiać
+# TODO: Weliminowanie tych samych rodziców
